@@ -104,6 +104,33 @@ public class Log {
                 Data__c = flush()));
     }    
     
+    //Add debug to log class
+    public static void debug(String debugString) {
+        if (!ConfigService.debugEnabled) {
+            return;
+        }
+        System.debug(LoggingLevel.INFO, debugString);
+    }
+
+    public static void debug(String name, String value){
+        debug(name+': '+value);
+    }
+    public static void debug(String name, Decimal value){
+        debug(name+': '+value);
+    }
+    public static void debug(String name, Integer value){
+        debug(name+': '+value);
+    }
+    public static void debug(String name, Boolean value){
+        debug(name+': '+value);
+    }
+    public static void debug(String name, SObject value){
+        debug(name+': '+JSON.serializePretty(value));
+    }
+    public static void debug(String name, List<SObject> value){
+        debug(name+': '+JSON.serializePretty(value));
+    }
+    
     /**
      * Resets the log state
      **/
