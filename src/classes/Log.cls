@@ -27,7 +27,8 @@ public class Log {
 	private static final Integer SOQL_IDX = 1;    
 	private static final Map<Integer, String> limitsByIdx = 
         new Map<Integer, String> { DML_IDX => 'DML', SOQL_IDX => 'SQL'};
-    
+    private static final Boolean debugEnabled = LogConfigService.debugEnabled;
+    private static final Boolean loggingEnabled = LogConfigService.loggingEnabled;
     static {
         reset();
     }
@@ -39,7 +40,7 @@ public class Log {
 		LogScope newScope = new LogScope();
         newScope.scope = scope;
         newScope.limits = new List<Integer> { 
-            Limits.getDMLStatements(), 
+            Limits.getDmlStatements(),
 			Limits.getQueries() };
 		newScope.parent = Log.current;
         Log.current.logEntries.add(newScope);
@@ -50,7 +51,8 @@ public class Log {
      * Add the given message to the scope last pushed
      **/
     public static void message(String message) {
-		Log.current.logEntries.add(message);        
+		message = message.replaceAll(':','=');
+        Log.current.logEntries.add(message);
     }
     
     /**
@@ -58,7 +60,7 @@ public class Log {
      **/
     public static void pop() {
         Log.current.limits = new List<Integer> { 
-            Limits.getDMLStatements() - Log.current.limits[DML_IDX], 
+            Limits.getDmlStatements() - Log.current.limits[DML_IDX],
 			Limits.getQueries() - Log.current.limits[SOQL_IDX]};
      	Log.current = Log.current.parent;           
     }
@@ -78,8 +80,11 @@ public class Log {
      * Emits the current log state to the Log__e platform event
      **/
     public static void emit() {
+        if(!loggingEnabled){
+            return;
+        }
         
-        // Log title is primarly present to allow filtering
+        // Log title is primarily present to allow filtering
         String title = Log.root.scope;
         Integer dml = -1;
         Integer soql = -1;
@@ -94,22 +99,25 @@ public class Log {
 				title = (String) top;                
             }
         }
-        
+
+        String dataString = flush();
+
         // Emit the log data via Platform Events
         EventBus.publish(
             new Log__e(
                 Title__c = title,
                 DML__c = dml,
                 SOQL__c = soql,
-                Data__c = flush()));
+                Data__c = dataString));
     }    
     
     //Add debug to log class
     public static void debug(String debugString) {
-        if (!ConfigService.debugEnabled) {
+        if (!debugEnabled) {
             return;
         }
         System.debug(LoggingLevel.INFO, debugString);
+        //Log.message(debugString);
     }
 
     public static void debug(String name, String value){
@@ -124,11 +132,13 @@ public class Log {
     public static void debug(String name, Boolean value){
         debug(name+': '+value);
     }
-    public static void debug(String name, SObject value){
-        debug(name+': '+JSON.serializePretty(value));
+
+    public static void debug(String name, Exception value){
+        debug(name+': '+JSON.serializePretty((String)String.valueOf(value), true));
     }
-    public static void debug(String name, List<SObject> value){
-        debug(name+': '+JSON.serializePretty(value));
+
+    public static void debug(String name, Object value){
+        debug(name+': '+JSON.serializePretty(value), true);
     }
     
     /**
@@ -136,7 +146,7 @@ public class Log {
      **/
     private static void reset() {
         root = current = new LogScope();
-        DateTime now = DateTime.now();
+        Datetime now = Datetime.now();
         current.scope = String.valueOf(now+'.'+now.millisecond());        
     }
     

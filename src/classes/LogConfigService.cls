@@ -1,4 +1,4 @@
-public with sharing class ConfigService {
+public with sharing class LogConfigService {
 
     private static Config settings {
         get {
@@ -11,17 +11,25 @@ public with sharing class ConfigService {
             return settings.debugEnabled;
         }
     }
+    public static Boolean loggingEnabled {
+        get {
+            return settings.loggingEnabled;
+        }
+    }
+
 
     private class Config {
         //Default Config Settings
         private Log_Config__mdt defaultLogConfig = Test.isRunningTest() ? null : [
-                SELECT Enable_Debug__c
+                SELECT Enable_Debug__c, Enable_Logging__c
                 FROM Log_Config__mdt
                 WHERE DeveloperName = 'Default'
         ];
         private Boolean debugEnabled;
+        private Boolean loggingEnabled;
         private Config() {
             this.debugEnabled = Test.isRunningTest() ? true : defaultLogConfig.Enable_Debug__c;
+            this.loggingEnabled = Test.isRunningTest() ? true : defaultLogConfig.Enable_Logging__c;
         }
     }
 }
