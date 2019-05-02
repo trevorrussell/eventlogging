@@ -1,35 +1,33 @@
-public with sharing class LogConfigService {
+public with sharing class LogConfigService extends ConfigService {
+    private static LogConfigService service;
+
+    private LogConfigService() {
+        objectName = 'Log_Config__mdt';
+    }
+
+    public static Map<String, String> configMap {
+        get {
+            return settings.configMap;
+        }
+    }
 
     private static Config settings {
         get {
+            if(service == null){
+                service = new LogConfigService();
+            }
             return (settings != null && !Test.isRunningTest()) ? settings : new Config();
         }
     }
 
     public static Boolean debugEnabled {
         get {
-            return settings.debugEnabled;
+            return Boolean.valueOf(configMap.get('enable_debug__c'));
         }
     }
     public static Boolean loggingEnabled {
         get {
-            return settings.loggingEnabled;
-        }
-    }
-
-
-    private class Config {
-        //Default Config Settings
-        private Log_Config__mdt defaultLogConfig = Test.isRunningTest() ? null : [
-                SELECT Enable_Debug__c, Enable_Logging__c
-                FROM Log_Config__mdt
-                WHERE DeveloperName = 'Default'
-        ];
-        private Boolean debugEnabled;
-        private Boolean loggingEnabled;
-        private Config() {
-            this.debugEnabled = Test.isRunningTest() ? true : defaultLogConfig.Enable_Debug__c;
-            this.loggingEnabled = Test.isRunningTest() ? true : defaultLogConfig.Enable_Logging__c;
+            return Boolean.valueOf(configMap.get('enable_logging__c'));
         }
     }
 }

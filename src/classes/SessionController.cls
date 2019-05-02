@@ -4,5 +4,4 @@ public class SessionController {
     public static String getSessionId() {
         return UserInfo.getSessionId();
     }
-    
 }
