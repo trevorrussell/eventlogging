@@ -13,8 +13,22 @@ public with sharing abstract class ConfigService {
         public Config() {
             String fieldsToQuery = String.valueOf(listOfFields);
             fieldsToQuery = fieldsToQuery.remove('(').remove(')');
-            String configQueryString = 'SELECT '+fieldsToQuery+' FROM '+objectName+' WHERE DeveloperName = :environmentName';
-            SObject customMetaDataRecord = System.Database.query(configQueryString);
+            String configQueryString = 'SELECT '+fieldsToQuery+' FROM '+objectName+
+                    ' WHERE DeveloperName = :environmentName OR DeveloperName = \'Default\'';
+            List<SObject> customMetaDataRecords = System.Database.query(configQueryString);
+            SObject customMetaDataRecord;
+            if(customMetaDataRecords.size()==1){
+                customMetaDataRecord = customMetaDataRecords[0];
+            }else {
+                for (SObject metaDataObject : customMetaDataRecords) {
+                    if (metaDataObject.get('DeveloperName') == environmentName) {
+                        customMetaDataRecord = metaDataObject;
+                    }
+                }
+            }
+            if(customMetaDataRecord == null){
+                throw new configException('No Custom Metadata Record found. Please add a Default or environment specific entry');
+            }
             for(String fieldName : listOfFields){
                 configMap.put(fieldName,String.valueOf((Object)customMetaDataRecord.get(fieldName)));
             }
@@ -33,4 +47,6 @@ public with sharing abstract class ConfigService {
         }
         return hostName;
     }
+
+    public class configException extends Exception{}
 }
