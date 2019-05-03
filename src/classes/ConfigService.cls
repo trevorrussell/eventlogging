@@ -1,29 +1,31 @@
 public with sharing abstract class ConfigService {
-    public static String objectName { get; set; }
+    private static final String ENVIRONMENT_NAME_KEY_FIELD =  'DeveloperName';
+    private static final String EXCEPTION_METADATA_RECORD_NOT_FOUND = 'No Custom Metadata Record found. Please add a Default or environment specific entry';
 
     public class Config {
         private String environmentName = getCurrentEnvironmentName();
-        private Map<String, Schema.SObjectField> objectFields= Schema.getGlobalDescribe().get(objectName).getDescribe().fields.getMap();
-        private List<String> listOfFields = new List<String>(objectFields.keySet());
         public Map<String, String> configMap = new Map<String, String>();
-        public Config() {
+        public Config(String objectName) {
+            Map<String, Schema.SObjectField> objectFields =
+                    Schema.getGlobalDescribe().get(objectName).getDescribe().fields.getMap();
+            List<String> listOfFields = new List<String>(objectFields.keySet());
             String fieldsToQuery = String.valueOf(listOfFields);
             fieldsToQuery = fieldsToQuery.remove('(').remove(')');
             String configQueryString = 'SELECT '+fieldsToQuery+' FROM '+objectName+
-                    ' WHERE DeveloperName = :environmentName OR DeveloperName = \'Default\'';
+                    ' WHERE ('+ENVIRONMENT_NAME_KEY_FIELD+' = :environmentName OR '+ENVIRONMENT_NAME_KEY_FIELD+' = \'Default\')';
             List<SObject> customMetaDataRecords = System.Database.query(configQueryString);
             SObject customMetaDataRecord;
             if(customMetaDataRecords.size()==1){
                 customMetaDataRecord = customMetaDataRecords[0];
             }else {
                 for (SObject metaDataObject : customMetaDataRecords) {
-                    if (metaDataObject.get('DeveloperName') == environmentName) {
+                    if (metaDataObject.get(ENVIRONMENT_NAME_KEY_FIELD) == environmentName) {
                         customMetaDataRecord = metaDataObject;
                     }
                 }
             }
             if(customMetaDataRecord == null){
-                throw new configException('No Custom Metadata Record found. Please add a Default or environment specific entry');
+                throw new configException(EXCEPTION_METADATA_RECORD_NOT_FOUND);
             }
             for(String fieldName : listOfFields){
                 configMap.put(fieldName,String.valueOf((Object)customMetaDataRecord.get(fieldName)));

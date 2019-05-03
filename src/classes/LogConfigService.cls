@@ -1,16 +1,9 @@
 public with sharing class LogConfigService extends ConfigService {
-    private static LogConfigService service;
-
-    private LogConfigService() {
-        objectName = 'Log_Config__mdt';
-    }
+    private static final String OBJECT_NAME = 'Log_Config__mdt';
 
     private static Config settings {
         get {
-            if(service == null){
-                service = new LogConfigService();
-            }
-            return (settings != null && !Test.isRunningTest()) ? settings : new Config();
+            return (settings != null && !Test.isRunningTest()) ? settings : new Config(OBJECT_NAME);
         }
     }
 
@@ -21,7 +14,7 @@ public with sharing class LogConfigService extends ConfigService {
     }
 
 
-//******************Additional Custom methods******************
+//**************** Additional Custom methods to transform specific string fields to other primitives ***************//
     public static Boolean debugEnabled {
         get {
             return Boolean.valueOf(configMap.get('enable_debug__c'));
