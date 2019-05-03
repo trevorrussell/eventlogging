@@ -1,5 +1,7 @@
 public with sharing abstract class ConfigService {
     private static final String ENVIRONMENT_NAME_KEY_FIELD =  'DeveloperName';
+    private static final String PRODUCTION_ENVIRONMENT_NAME = 'Production';
+    private static final String DEFAULT_ENVIRONMENT_NAME = 'Default';
     private static final String EXCEPTION_METADATA_RECORD_NOT_FOUND = 'No Custom Metadata Record found. Please add a Default or environment specific entry';
 
     public class Config {
@@ -11,8 +13,10 @@ public with sharing abstract class ConfigService {
             List<String> listOfFields = new List<String>(objectFields.keySet());
             String fieldsToQuery = String.valueOf(listOfFields);
             fieldsToQuery = fieldsToQuery.remove('(').remove(')');
-            String configQueryString = 'SELECT '+fieldsToQuery+' FROM '+objectName+
-                    ' WHERE ('+ENVIRONMENT_NAME_KEY_FIELD+' = :environmentName OR '+ENVIRONMENT_NAME_KEY_FIELD+' = \'Default\')';
+            String configQueryString = 'SELECT '+fieldsToQuery+
+                    ' FROM '+objectName+
+                    ' WHERE ('+ENVIRONMENT_NAME_KEY_FIELD+' = :environmentName OR '+
+                    ENVIRONMENT_NAME_KEY_FIELD+' = \''+DEFAULT_ENVIRONMENT_NAME+'\')';
             List<SObject> customMetaDataRecords = System.Database.query(configQueryString);
             SObject customMetaDataRecord;
             if(customMetaDataRecords.size()==1){
@@ -38,7 +42,7 @@ public with sharing abstract class ConfigService {
         String hostName = Url.getSalesforceBaseUrl().getHost();
         Boolean isSandbox = (Pattern.matches('(.*\\.)?cs[0-9]*(-api)?\\..*force.com', hostName));
         if (!isSandbox) {
-            return 'Production';
+            return PRODUCTION_ENVIRONMENT_NAME;
         } else {
             hostName = hostName.substringAfter('--'); //remove everything before the --
             hostName = hostName.substringBefore('.');
