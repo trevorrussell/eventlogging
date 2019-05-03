@@ -5,12 +5,6 @@ public with sharing class LogConfigService extends ConfigService {
         objectName = 'Log_Config__mdt';
     }
 
-    public static Map<String, String> configMap {
-        get {
-            return settings.configMap;
-        }
-    }
-
     private static Config settings {
         get {
             if(service == null){
@@ -20,6 +14,14 @@ public with sharing class LogConfigService extends ConfigService {
         }
     }
 
+    public static Map<String, String> configMap {
+        get {
+            return settings.configMap;
+        }
+    }
+
+
+//******************Additional Custom methods******************
     public static Boolean debugEnabled {
         get {
             return Boolean.valueOf(configMap.get('enable_debug__c'));

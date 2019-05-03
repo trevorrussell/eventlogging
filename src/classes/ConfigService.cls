@@ -1,10 +1,6 @@
 public with sharing abstract class ConfigService {
     public static String objectName { get; set; }
 
-    public ConfigService(){
-
-    }
-
     public class Config {
         private String environmentName = getCurrentEnvironmentName();
         private Map<String, Schema.SObjectField> objectFields= Schema.getGlobalDescribe().get(objectName).getDescribe().fields.getMap();
